@@ -1,21 +1,23 @@
-import { motion } from 'framer-motion'
-import { ArrowRight, Filter, Sparkles } from 'lucide-react'
-import { useState } from 'react'
+import { ArrowRight, Filter } from 'lucide-react'
+import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
+import { uniqueValues, type Job } from '@/api/jobs'
 import { JobCard } from '@/components/jobs/JobCard'
 import { JobModal } from '@/components/jobs/JobModal'
 import { SectionHeading } from '@/components/ui/primitives'
-import { Reveal } from '@/components/ui/Reveal'
-import { departments, jobs, type Job } from '@/data/jobs'
+import { usePublicJobs } from '@/hooks/usePublicJobs'
 import { cn } from '@/lib/utils'
 
+const PREVIEW_COUNT = 4
+
 export function JobsPreview() {
-  const [dept, setDept] = useState<string>('All Departments')
+  const { jobs, totalJobCount, loginRequiredToSeeMore, loading, error, reload } = usePublicJobs()
+  const [dept, setDept] = useState('All')
   const [active, setActive] = useState<Job | null>(null)
 
-  const filtered = (
-    dept === 'All Departments' ? jobs : jobs.filter((j) => j.departments.includes(dept))
-  ).slice(0, 4)
+  const departments = useMemo(() => ['All', ...uniqueValues(jobs.map((job) => job.department))], [jobs])
+  const filtered = (dept === 'All' ? jobs : jobs.filter((job) => job.department === dept)).slice(0, PREVIEW_COUNT)
+  const remaining = Math.max(0, totalJobCount - filtered.length)
 
   return (
     <section id="jobs" className="section-pad relative">
@@ -24,20 +26,19 @@ export function JobsPreview() {
           <SectionHeading
             align="left"
             eyebrow="Live openings"
-            title="Fresh roles, scored"
-            highlight="against your resume."
-            description="Filter by department, open a card to read the complete job description, eligibility and selection process."
+            title="Fresh roles from"
+            highlight="the placement cell."
+            description="Latest active jobs from the portal. Open a card for the full description."
             className="max-w-2xl"
           />
           <Link to="/jobs" className="btn-primary group shrink-0">
-            See all 42 openings
+            {totalJobCount > 0 ? `See all ${totalJobCount} openings` : 'See all openings'}
             <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
           </Link>
         </div>
 
-        {/* department filter */}
-        <Reveal className="mt-10">
-          <div className="no-scrollbar flex items-center gap-2 overflow-x-auto pb-1 lg:flex-wrap lg:overflow-visible">
+        {departments.length > 1 && (
+          <div className="no-scrollbar mt-10 flex items-center gap-2 overflow-x-auto pb-1">
             <span className="mr-1 hidden shrink-0 items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-slate-500 sm:flex">
               <Filter className="h-3.5 w-3.5" />
               Department
@@ -47,61 +48,64 @@ export function JobsPreview() {
                 key={d}
                 onClick={() => setDept(d)}
                 className={cn(
-                  'relative shrink-0 rounded-full border px-4 py-2 text-[12px] font-semibold transition-colors duration-300',
+                  'shrink-0 rounded-full border px-4 py-2 text-[12px] font-semibold transition-colors',
                   dept === d
-                    ? 'border-brand-400/50 text-white'
-                    : 'border-white/10 bg-white/[0.03] text-slate-400 hover:border-white/20 hover:text-white',
+                    ? 'border-brand-400/50 bg-brand-500/15 text-white'
+                    : 'border-white/10 bg-white/[0.03] text-slate-400 hover:text-white',
                 )}
               >
-                {dept === d && (
-                  <motion.span
-                    layoutId="dept-pill"
-                    className="absolute inset-0 rounded-full bg-brand-500/15"
-                    transition={{ type: 'spring', stiffness: 320, damping: 30 }}
-                  />
-                )}
-                <span className="relative">{d}</span>
+                {d}
               </button>
             ))}
           </div>
-        </Reveal>
+        )}
 
-        {/* cards */}
-        <motion.div layout className="mt-7 grid gap-4 lg:grid-cols-2">
-          {filtered.map((job, i) => (
-            <JobCard key={job.id} job={job} index={i} onOpen={() => setActive(job)} />
-          ))}
-        </motion.div>
-
-        {filtered.length === 0 && (
-          <div className="mt-7 rounded-3xl border border-white/10 bg-white/[0.02] p-12 text-center">
-            <p className="text-sm text-slate-400">
-              No live openings for this department right now — new drives are added every week.
-            </p>
+        {loading && (
+          <div className="mt-7 grid gap-4 lg:grid-cols-2">
+            {Array.from({ length: 2 }).map((_, i) => (
+              <div key={i} className="h-40 animate-pulse rounded-[26px] border border-white/[0.07] bg-white/[0.03]" />
+            ))}
           </div>
         )}
 
-        {/* footer strip */}
-        <Reveal className="mt-8">
-          <div className="relative flex flex-wrap items-center gap-4 overflow-hidden rounded-[26px] border border-white/10 bg-gradient-to-r from-brand-600/15 via-ink-900/50 to-neon-cyan/10 p-5 backdrop-blur-2xl sm:p-6">
-            <div className="pointer-events-none absolute -right-16 -top-20 h-52 w-52 rounded-full bg-neon-violet/20 blur-3xl" />
-            <span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-brand-500/15 text-brand-200">
-              <Sparkles className="h-5 w-5" />
-            </span>
-            <div className="mr-auto min-w-0">
-              <p className="text-[13.5px] font-bold text-white">
-                38 more openings match your branch and CGPA band
-              </p>
-              <p className="mt-0.5 text-[12px] text-slate-400">
-                Sort by resume score, package, deadline or company tier on the jobs board.
-              </p>
-            </div>
-            <Link to="/jobs" className="btn-ghost shrink-0 text-[12.5px]">
-              Open jobs board
-              <ArrowRight className="h-3.5 w-3.5" />
-            </Link>
+        {error && !loading && (
+          <div className="mt-7 rounded-3xl border border-neon-pink/20 bg-neon-pink/[0.06] p-8 text-center">
+            <p className="text-sm font-semibold text-white">Could not load jobs</p>
+            <p className="mt-1.5 text-[12.5px] text-slate-400">{error}</p>
+            <button onClick={() => void reload()} className="btn-ghost mt-4 text-[12.5px]">
+              Try again
+            </button>
           </div>
-        </Reveal>
+        )}
+
+        {!loading && !error && (
+          <>
+            <div className="mt-7 grid gap-4 lg:grid-cols-2">
+              {filtered.map((job) => (
+                <JobCard key={job.id} job={job} onOpen={() => setActive(job)} />
+              ))}
+            </div>
+            {filtered.length === 0 && (
+              <div className="mt-7 rounded-3xl border border-white/10 bg-white/[0.02] p-12 text-center">
+                <p className="text-sm text-slate-400">No live openings right now.</p>
+              </div>
+            )}
+          </>
+        )}
+
+        <div className="mt-8 flex flex-wrap items-center justify-between gap-4 rounded-[26px] border border-white/10 bg-ink-900/55 p-5">
+          <p className="text-[13px] text-slate-300">
+            {loginRequiredToSeeMore
+              ? `${remaining} more roles are available after login`
+              : remaining > 0
+                ? `${remaining} more roles on the jobs board`
+                : 'Browse every live role on the jobs board'}
+          </p>
+          <Link to="/jobs" className="btn-ghost shrink-0 text-[12.5px]">
+            Open jobs board
+            <ArrowRight className="h-3.5 w-3.5" />
+          </Link>
+        </div>
       </div>
 
       <JobModal job={active} open={!!active} onClose={() => setActive(null)} />

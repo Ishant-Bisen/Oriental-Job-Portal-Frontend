@@ -1,7 +1,7 @@
 import { motion } from 'framer-motion'
 import { ArrowRight, Mail, MapPin, Phone, Send } from 'lucide-react'
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { BridgeMark, ParticleField } from '@/components/fx/ScreenFX'
 import { BrandIcon } from '@/components/ui/BrandIcons'
 import { MagneticButton } from '@/components/ui/primitives'
@@ -19,26 +19,27 @@ const quickLinks = [
 ]
 
 const forStudents = [
-  'Student login',
-  'Build your resume',
-  'Resume score check',
-  'Prep hub & past questions',
-  'Alumni mentorship',
-  'Offer vault',
+  { label: 'Student login', to: '/login' },
+  { label: 'Create account', to: '/register' },
+  { label: 'Build your resume', to: '/#portals' },
+  { label: 'Resume score check', to: '/#portals' },
+  { label: 'Prep hub & past questions', to: '/#portals' },
+  { label: 'Offer vault', to: '/#portals' },
 ]
 
 const forRecruiters = [
-  'Recruiter login',
-  'Post a drive',
-  'Book campus dates',
-  'Talent pool access',
-  'Hiring analytics',
-  'MoU & policies',
+  { label: 'Recruiter login', to: '/login?role=recruiter' },
+  { label: 'Post a drive', to: '/#portals' },
+  { label: 'Book campus dates', to: '/#portals' },
+  { label: 'Talent pool access', to: '/#portals' },
+  { label: 'Hiring analytics', to: '/#portals' },
+  { label: 'MoU & policies', to: '/#portals' },
 ]
 
 export function Footer() {
   const [email, setEmail] = useState('')
   const [sent, setSent] = useState(false)
+  const navigate = useNavigate()
 
   return (
     <footer className="relative mt-10">
@@ -68,11 +69,17 @@ export function Footer() {
               </p>
 
               <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
-                <MagneticButton className="btn bg-white px-7 py-3.5 text-[13px] font-bold text-ink-950 hover:bg-slate-100">
+                <MagneticButton
+                  onClick={() => navigate('/register')}
+                  className="btn bg-white px-7 py-3.5 text-[13px] font-bold text-ink-950 hover:bg-slate-100"
+                >
                   Create student account
                   <ArrowRight className="h-4 w-4" />
                 </MagneticButton>
-                <MagneticButton className="btn border border-white/25 bg-white/[0.06] px-7 py-3.5 text-[13px] font-bold text-white hover:bg-white/[0.12]">
+                <MagneticButton
+                  onClick={() => navigate('/login?role=recruiter')}
+                  className="btn border border-white/25 bg-white/[0.06] px-7 py-3.5 text-[13px] font-bold text-white hover:bg-white/[0.12]"
+                >
                   I am a recruiter
                 </MagneticButton>
               </div>
@@ -182,19 +189,31 @@ export function Footer() {
             </FooterColumn>
 
             <FooterColumn title="For students">
-              {forStudents.map((l) => (
-                <a key={l} href="#portals" className="footer-link">
-                  {l}
-                </a>
-              ))}
+              {forStudents.map((l) =>
+                l.to.startsWith('/#') ? (
+                  <a key={l.label} href={l.to.slice(1)} className="footer-link">
+                    {l.label}
+                  </a>
+                ) : (
+                  <Link key={l.label} to={l.to} className="footer-link">
+                    {l.label}
+                  </Link>
+                ),
+              )}
             </FooterColumn>
 
             <FooterColumn title="For recruiters">
-              {forRecruiters.map((l) => (
-                <a key={l} href="#portals" className="footer-link">
-                  {l}
-                </a>
-              ))}
+              {forRecruiters.map((l) =>
+                l.to.startsWith('/#') ? (
+                  <a key={l.label} href={l.to.slice(1)} className="footer-link">
+                    {l.label}
+                  </a>
+                ) : (
+                  <Link key={l.label} to={l.to} className="footer-link">
+                    {l.label}
+                  </Link>
+                ),
+              )}
             </FooterColumn>
           </div>
 

@@ -12,6 +12,8 @@ import { Footer } from '@/components/layout/Footer'
 import { Navbar } from '@/components/layout/Navbar'
 import Landing from '@/pages/Landing'
 import JobsPage from '@/pages/JobsPage'
+import LoginPage from '@/pages/LoginPage'
+import RegisterPage from '@/pages/RegisterPage'
 
 export default function App() {
   const [loading, setLoading] = useState(true)
@@ -42,6 +44,8 @@ export default function App() {
             <Routes location={location} key={location.pathname}>
               <Route path="/" element={<Landing />} />
               <Route path="/jobs" element={<JobsPage />} />
+              <Route path="/login" element={<LoginPage />} />
+              <Route path="/register" element={<RegisterPage />} />
               <Route path="*" element={<Landing />} />
             </Routes>
           </motion.div>

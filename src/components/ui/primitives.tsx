@@ -242,15 +242,19 @@ export function Marquee({
 export function LogoTile({
   slug,
   name,
+  src,
   className,
   imgClassName,
 }: {
-  slug: string
+  slug?: string
   name: string
+  src?: string
   className?: string
   imgClassName?: string
 }) {
-  const [failed, setFailed] = useState(false)
+  const imageSrc = src || (slug ? logoUrl(slug) : undefined)
+  const [failedSrc, setFailedSrc] = useState<string | null>(null)
+  const failed = !imageSrc || failedSrc === imageSrc
 
   if (failed) {
     return (
@@ -276,10 +280,10 @@ export function LogoTile({
       title={name}
     >
       <img
-        src={logoUrl(slug)}
+        src={imageSrc}
         alt={`${name} logo`}
         loading="lazy"
-        onError={() => setFailed(true)}
+        onError={() => setFailedSrc(imageSrc)}
         className={cn('h-full w-full object-contain', imgClassName)}
       />
     </div>

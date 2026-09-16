@@ -84,14 +84,14 @@ export function Navbar() {
 
           <div className="flex items-center gap-2">
             <button
-              onClick={() => go('/#portals')}
+              onClick={() => go('/login?role=recruiter')}
               className="hidden items-center gap-2 rounded-full border border-white/12 bg-white/[0.03] px-4 py-2 text-[13px] font-semibold text-slate-200 transition hover:border-neon-cyan/40 hover:text-white sm:inline-flex"
             >
               <Building2 className="h-3.5 w-3.5" />
               Recruiter
             </button>
             <button
-              onClick={() => go('/#portals')}
+              onClick={() => go('/login')}
               className="group relative inline-flex items-center gap-2 overflow-hidden rounded-full bg-gradient-to-r from-brand-500 to-neon-violet px-4 py-2 text-[13px] font-semibold text-white shadow-glow transition hover:shadow-glow-lg"
             >
               <span className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/30 to-transparent transition-transform duration-700 group-hover:translate-x-full" />

@@ -17,6 +17,7 @@ import {
   Users2,
 } from 'lucide-react'
 import { useState } from 'react'
+import { Link } from 'react-router-dom'
 import { LogoTile, MeterBar, SectionHeading } from '@/components/ui/primitives'
 import { Reveal } from '@/components/ui/Reveal'
 import { recruiterFeatures, studentFeatures } from '@/data/content'
@@ -123,11 +124,14 @@ export function Portals() {
                   ))}
                 </div>
 
-                <button className="btn-primary group mt-7">
+                <Link
+                  to={role === 'student' ? '/login' : '/login?role=recruiter'}
+                  className="btn-primary group mt-7"
+                >
                   <LogIn className="h-4 w-4" />
                   {meta.cta}
                   <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
-                </button>
+                </Link>
               </motion.div>
             </AnimatePresence>
           </div>
