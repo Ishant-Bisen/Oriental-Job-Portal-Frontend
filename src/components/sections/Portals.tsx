@@ -42,7 +42,7 @@ const roleMeta = {
     heading: 'Everything a recruiter sees after logging in',
     body: 'Post a drive, filter a verified talent pool, shortlist in bulk, publish interview slots and roll out offers — without a single spreadsheet.',
     features: recruiterFeatures,
-    cta: 'Request recruiter access',
+    cta: 'Recruiter access — coming soon',
     accent: 'from-neon-violet to-neon-pink',
   },
 } as const

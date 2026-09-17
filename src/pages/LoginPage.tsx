@@ -1,46 +1,51 @@
-import { ArrowLeft, ArrowRight, Building2, Eye, EyeOff, GraduationCap, Lock, Mail, UserRound } from 'lucide-react'
+import { ArrowLeft, ArrowRight, Building2, Eye, EyeOff, GraduationCap, Lock, Mail } from 'lucide-react'
 import { FormEvent, useMemo, useState } from 'react'
-import { Link, useSearchParams } from 'react-router-dom'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
+import { useAuth } from '@/auth/AuthProvider'
+import { ComingSoonNotice } from '@/components/auth/ComingSoonNotice'
 import { BridgeMark } from '@/components/fx/ScreenFX'
+import { ApiError } from '@/lib/api'
 import { cn } from '@/lib/utils'
 
 type Role = 'student' | 'recruiter'
 
 export default function LoginPage() {
   const [params] = useSearchParams()
-  const initialRole: Role = params.get('role') === 'recruiter' ? 'recruiter' : 'student'
+  const navigate = useNavigate()
+  const { loginAsStudent, isAuthenticated, user } = useAuth()
 
+  const initialRole: Role = params.get('role') === 'recruiter' ? 'recruiter' : 'student'
   const [role, setRole] = useState<Role>(initialRole)
   const [identifier, setIdentifier] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
-  const [submitted, setSubmitted] = useState(false)
+  const [submitting, setSubmitting] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   const copy = useMemo(
-    () =>
-      role === 'student'
-        ? {
-            title: 'Student login',
-            subtitle: 'Use your university roll number or campus email to open your placement dashboard.',
-            idLabel: 'Roll number or email',
-            idPlaceholder: '22CSE001 or you@university.edu',
-            idIcon: UserRound,
-          }
-        : {
-            title: 'Recruiter login',
-            subtitle: 'Sign in with the work email registered with the placement cell.',
-            idLabel: 'Work email',
-            idPlaceholder: 'hiring@company.com',
-            idIcon: Mail,
-          },
-    [role],
+    () => ({
+      title: 'Student login',
+      subtitle: 'Sign in with the campus email or mobile number linked to your candidate account.',
+      idLabel: 'Email or mobile',
+      idPlaceholder: 'you@university.edu or 9876543210',
+    }),
+    [],
   )
 
-  const IdIcon = copy.idIcon
-
-  const onSubmit = (e: FormEvent) => {
+  const onSubmit = async (e: FormEvent) => {
     e.preventDefault()
-    setSubmitted(true)
+    if (role === 'recruiter') return
+
+    setError(null)
+    setSubmitting(true)
+    try {
+      await loginAsStudent(identifier, password)
+      navigate('/jobs', { replace: true })
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : 'Sign-in failed. Please try again.')
+    } finally {
+      setSubmitting(false)
+    }
   }
 
   return (
@@ -65,132 +70,131 @@ export default function LoginPage() {
               </span>
               <p className="mt-6 chip border-white/15 bg-white/[0.06] text-slate-200">TalentBridge portal</p>
               <h1 className="mt-4 text-3xl font-extrabold leading-tight sm:text-[2.35rem]">
-                Welcome back to the{' '}
-                <span className="text-gradient-animated">placement cell.</span>
+                Welcome back to the <span className="text-gradient-animated">placement cell.</span>
               </h1>
               <p className="mt-4 max-w-md text-[13.5px] leading-relaxed text-slate-300">
                 Track drives, apply to live roles, and stay on top of interview slots — all from one verified
                 campus account.
               </p>
-
-              <ul className="mt-8 space-y-3 text-[12.5px] text-slate-300">
-                {[
-                  'Verified student & recruiter workspaces',
-                  'Real-time drive alerts and deadlines',
-                  'Secure access with campus credentials',
-                ].map((item) => (
-                  <li key={item} className="flex items-start gap-2.5">
-                    <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-brand-400" />
-                    {item}
-                  </li>
-                ))}
-              </ul>
             </div>
           </aside>
 
           <section className="rounded-[28px] border border-white/10 bg-ink-900/70 p-6 backdrop-blur-xl sm:p-8">
-            <div className="inline-flex rounded-full border border-white/10 bg-ink-950/60 p-1">
-              {(
-                [
-                  { key: 'student' as const, label: 'Student', icon: GraduationCap },
-                  { key: 'recruiter' as const, label: 'Recruiter', icon: Building2 },
-                ] as const
-              ).map(({ key, label, icon: Icon }) => (
-                <button
-                  key={key}
-                  type="button"
-                  onClick={() => {
-                    setRole(key)
-                    setSubmitted(false)
-                  }}
-                  className={cn(
-                    'inline-flex items-center gap-2 rounded-full px-4 py-2 text-[12.5px] font-semibold transition',
-                    role === key
-                      ? 'bg-gradient-to-r from-brand-500 to-neon-violet text-white shadow-glow'
-                      : 'text-slate-400 hover:text-white',
-                  )}
-                >
-                  <Icon className="h-3.5 w-3.5" />
-                  {label}
-                </button>
-              ))}
-            </div>
-
-            <h2 className="mt-6 text-2xl font-bold text-white">{copy.title}</h2>
-            <p className="mt-2 text-[13px] leading-relaxed text-slate-400">{copy.subtitle}</p>
-
-            <form onSubmit={onSubmit} className="mt-7 space-y-4">
-              <label className="block">
-                <span className="mb-1.5 block text-[11px] font-bold uppercase tracking-wider text-slate-500">
-                  {copy.idLabel}
-                </span>
-                <span className="flex items-center gap-2.5 rounded-2xl border border-white/10 bg-ink-950/60 px-4 py-3 focus-within:border-brand-400/40">
-                  <IdIcon className="h-4 w-4 shrink-0 text-slate-500" />
-                  <input
-                    required
-                    value={identifier}
-                    onChange={(e) => setIdentifier(e.target.value)}
-                    placeholder={copy.idPlaceholder}
-                    className="min-w-0 flex-1 bg-transparent text-[13px] text-white placeholder:text-slate-600 focus:outline-none"
-                    autoComplete={role === 'student' ? 'username' : 'email'}
-                  />
-                </span>
-              </label>
-
-              <label className="block">
-                <span className="mb-1.5 block text-[11px] font-bold uppercase tracking-wider text-slate-500">
-                  Password
-                </span>
-                <span className="flex items-center gap-2.5 rounded-2xl border border-white/10 bg-ink-950/60 px-4 py-3 focus-within:border-brand-400/40">
-                  <Lock className="h-4 w-4 shrink-0 text-slate-500" />
-                  <input
-                    required
-                    type={showPassword ? 'text' : 'password'}
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder="Enter your password"
-                    className="min-w-0 flex-1 bg-transparent text-[13px] text-white placeholder:text-slate-600 focus:outline-none"
-                    autoComplete="current-password"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword((v) => !v)}
-                    className="text-slate-500 transition hover:text-white"
-                    aria-label={showPassword ? 'Hide password' : 'Show password'}
-                  >
-                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                  </button>
-                </span>
-              </label>
-
-              <div className="flex items-center justify-between gap-3 pt-1 text-[12px]">
-                <label className="inline-flex items-center gap-2 text-slate-400">
-                  <input type="checkbox" className="rounded border-white/20 bg-ink-950 text-brand-500" />
-                  Remember me
-                </label>
-                <button type="button" className="font-semibold text-brand-300 transition hover:text-brand-200">
-                  Forgot password?
-                </button>
+            {isAuthenticated && user ? (
+              <div className="rounded-2xl border border-brand-400/25 bg-brand-500/10 px-4 py-5 text-center">
+                <p className="text-[13px] font-semibold text-brand-100">Signed in as {user.email}</p>
+                <p className="mt-1 text-[12px] text-slate-400">Role: {user.role}</p>
+                <Link to="/jobs" className="btn-primary mt-5 inline-flex">
+                  Continue to jobs
+                  <ArrowRight className="h-4 w-4" />
+                </Link>
               </div>
+            ) : (
+              <>
+                <div className="inline-flex rounded-full border border-white/10 bg-ink-950/60 p-1">
+                  {(
+                    [
+                      { key: 'student' as const, label: 'Student', icon: GraduationCap },
+                      { key: 'recruiter' as const, label: 'Recruiter', icon: Building2 },
+                    ] as const
+                  ).map(({ key, label, icon: Icon }) => (
+                    <button
+                      key={key}
+                      type="button"
+                      onClick={() => {
+                        setRole(key)
+                        setError(null)
+                      }}
+                      className={cn(
+                        'inline-flex items-center gap-2 rounded-full px-4 py-2 text-[12.5px] font-semibold transition',
+                        role === key
+                          ? 'bg-gradient-to-r from-brand-500 to-neon-violet text-white shadow-glow'
+                          : 'text-slate-400 hover:text-white',
+                      )}
+                    >
+                      <Icon className="h-3.5 w-3.5" />
+                      {label}
+                    </button>
+                  ))}
+                </div>
 
-              <button type="submit" className="btn-primary group mt-2 w-full">
-                Sign in
-                <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
-              </button>
+                {role === 'recruiter' ? (
+                  <ComingSoonNotice
+                    title="Recruiter login is coming soon"
+                    description="Company sign-in is not available yet. We are building the recruiter workspace — student login is ready now."
+                  />
+                ) : (
+                  <>
+                    <h2 className="mt-6 text-2xl font-bold text-white">{copy.title}</h2>
+                    <p className="mt-2 text-[13px] leading-relaxed text-slate-400">{copy.subtitle}</p>
 
-              {submitted && (
-                <p className="rounded-2xl border border-brand-400/25 bg-brand-500/10 px-4 py-3 text-center text-[12.5px] text-brand-100">
-                  UI ready — connect your auth API to complete sign-in.
-                </p>
-              )}
-            </form>
+                    <form onSubmit={onSubmit} className="mt-7 space-y-4">
+                      <label className="block">
+                        <span className="mb-1.5 block text-[11px] font-bold uppercase tracking-wider text-slate-500">
+                          {copy.idLabel}
+                        </span>
+                        <span className="flex items-center gap-2.5 rounded-2xl border border-white/10 bg-ink-950/60 px-4 py-3 focus-within:border-brand-400/40">
+                          <Mail className="h-4 w-4 shrink-0 text-slate-500" />
+                          <input
+                            required
+                            type="text"
+                            value={identifier}
+                            onChange={(e) => setIdentifier(e.target.value)}
+                            placeholder={copy.idPlaceholder}
+                            className="min-w-0 flex-1 bg-transparent text-[13px] text-white placeholder:text-slate-600 focus:outline-none"
+                            autoComplete="username"
+                          />
+                        </span>
+                      </label>
 
-            <p className="mt-6 text-center text-[12.5px] text-slate-400">
-              New to TalentBridge?{' '}
-              <Link to="/register" className="font-semibold text-white transition hover:text-brand-200">
-                Create an account
-              </Link>
-            </p>
+                      <label className="block">
+                        <span className="mb-1.5 block text-[11px] font-bold uppercase tracking-wider text-slate-500">
+                          Password
+                        </span>
+                        <span className="flex items-center gap-2.5 rounded-2xl border border-white/10 bg-ink-950/60 px-4 py-3 focus-within:border-brand-400/40">
+                          <Lock className="h-4 w-4 shrink-0 text-slate-500" />
+                          <input
+                            required
+                            type={showPassword ? 'text' : 'password'}
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                            placeholder="Enter your password"
+                            className="min-w-0 flex-1 bg-transparent text-[13px] text-white placeholder:text-slate-600 focus:outline-none"
+                            autoComplete="current-password"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setShowPassword((v) => !v)}
+                            className="text-slate-500 transition hover:text-white"
+                            aria-label={showPassword ? 'Hide password' : 'Show password'}
+                          >
+                            {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                          </button>
+                        </span>
+                      </label>
+
+                      {error && (
+                        <p className="rounded-2xl border border-neon-pink/25 bg-neon-pink/[0.08] px-4 py-3 text-center text-[12.5px] text-neon-pink">
+                          {error}
+                        </p>
+                      )}
+
+                      <button type="submit" disabled={submitting} className="btn-primary group mt-2 w-full disabled:opacity-60">
+                        {submitting ? 'Signing in…' : 'Sign in'}
+                        {!submitting && <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />}
+                      </button>
+                    </form>
+
+                    <p className="mt-6 text-center text-[12.5px] text-slate-400">
+                      New to TalentBridge?{' '}
+                      <Link to="/register" className="font-semibold text-white transition hover:text-brand-200">
+                        Create an account
+                      </Link>
+                    </p>
+                  </>
+                )}
+              </>
+            )}
           </section>
         </div>
       </div>

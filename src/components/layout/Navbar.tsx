@@ -1,7 +1,8 @@
-import { AnimatePresence, motion, useScroll, useMotionValueEvent } from 'framer-motion'
-import { GraduationCap, Building2, Menu, X, Sparkles } from 'lucide-react'
+import { AnimatePresence, motion, useMotionValueEvent, useScroll } from 'framer-motion'
+import { Building2, GraduationCap, LogOut, Menu, Sparkles, X } from 'lucide-react'
 import { useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
+import { useAuth } from '@/auth/AuthProvider'
 import { BridgeMark } from '@/components/fx/ScreenFX'
 import { cn } from '@/lib/utils'
 
@@ -18,9 +19,11 @@ const links = [
 export function Navbar() {
   const [scrolled, setScrolled] = useState(false)
   const [open, setOpen] = useState(false)
+  const [loggingOut, setLoggingOut] = useState(false)
   const { scrollY } = useScroll()
   const { pathname } = useLocation()
   const navigate = useNavigate()
+  const { user, isAuthenticated, logout } = useAuth()
 
   useMotionValueEvent(scrollY, 'change', (v) => setScrolled(v > 40))
 
@@ -37,6 +40,17 @@ export function Navbar() {
     } else {
       navigate(to)
       window.scrollTo({ top: 0 })
+    }
+  }
+
+  const onLogout = async () => {
+    setLoggingOut(true)
+    try {
+      await logout()
+      navigate('/', { replace: true })
+    } finally {
+      setLoggingOut(false)
+      setOpen(false)
     }
   }
 
@@ -83,21 +97,39 @@ export function Navbar() {
           </nav>
 
           <div className="flex items-center gap-2">
-            <button
-              onClick={() => go('/login?role=recruiter')}
-              className="hidden items-center gap-2 rounded-full border border-white/12 bg-white/[0.03] px-4 py-2 text-[13px] font-semibold text-slate-200 transition hover:border-neon-cyan/40 hover:text-white sm:inline-flex"
-            >
-              <Building2 className="h-3.5 w-3.5" />
-              Recruiter
-            </button>
-            <button
-              onClick={() => go('/login')}
-              className="group relative inline-flex items-center gap-2 overflow-hidden rounded-full bg-gradient-to-r from-brand-500 to-neon-violet px-4 py-2 text-[13px] font-semibold text-white shadow-glow transition hover:shadow-glow-lg"
-            >
-              <span className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/30 to-transparent transition-transform duration-700 group-hover:translate-x-full" />
-              <GraduationCap className="relative h-3.5 w-3.5" />
-              <span className="relative">Student login</span>
-            </button>
+            {isAuthenticated && user ? (
+              <>
+                <span className="hidden max-w-[12rem] truncate rounded-full border border-white/12 bg-white/[0.03] px-3 py-2 text-[12px] font-semibold text-slate-300 sm:inline">
+                  {user.email}
+                </span>
+                <button
+                  onClick={() => void onLogout()}
+                  disabled={loggingOut}
+                  className="inline-flex items-center gap-2 rounded-full border border-white/12 bg-white/[0.03] px-4 py-2 text-[13px] font-semibold text-slate-200 transition hover:border-neon-pink/40 hover:text-white disabled:opacity-60"
+                >
+                  <LogOut className="h-3.5 w-3.5" />
+                  {loggingOut ? 'Signing out…' : 'Logout'}
+                </button>
+              </>
+            ) : (
+              <>
+                <button
+                  onClick={() => go('/login?role=recruiter')}
+                  className="hidden items-center gap-2 rounded-full border border-white/12 bg-white/[0.03] px-4 py-2 text-[13px] font-semibold text-slate-200 transition hover:border-neon-cyan/40 hover:text-white sm:inline-flex"
+                >
+                  <Building2 className="h-3.5 w-3.5" />
+                  Recruiter
+                </button>
+                <button
+                  onClick={() => go('/login')}
+                  className="group relative inline-flex items-center gap-2 overflow-hidden rounded-full bg-gradient-to-r from-brand-500 to-neon-violet px-4 py-2 text-[13px] font-semibold text-white shadow-glow transition hover:shadow-glow-lg"
+                >
+                  <span className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/30 to-transparent transition-transform duration-700 group-hover:translate-x-full" />
+                  <GraduationCap className="relative h-3.5 w-3.5" />
+                  <span className="relative">Student login</span>
+                </button>
+              </>
+            )}
             <button
               onClick={() => setOpen((o) => !o)}
               aria-label="Toggle navigation"
@@ -131,6 +163,30 @@ export function Navbar() {
                     <Sparkles className="h-3.5 w-3.5 text-brand-400" />
                   </motion.button>
                 ))}
+                {isAuthenticated ? (
+                  <button
+                    onClick={() => void onLogout()}
+                    className="mt-1 flex items-center gap-2 rounded-xl px-4 py-3 text-sm font-semibold text-neon-pink transition hover:bg-white/5"
+                  >
+                    <LogOut className="h-3.5 w-3.5" />
+                    Logout
+                  </button>
+                ) : (
+                  <>
+                    <button
+                      onClick={() => go('/login')}
+                      className="mt-1 rounded-xl px-4 py-3 text-left text-sm font-semibold text-white transition hover:bg-white/5"
+                    >
+                      Student login
+                    </button>
+                    <button
+                      onClick={() => go('/login?role=recruiter')}
+                      className="rounded-xl px-4 py-3 text-left text-sm font-semibold text-slate-300 transition hover:bg-white/5"
+                    >
+                      Recruiter login
+                    </button>
+                  </>
+                )}
               </div>
             </motion.nav>
           )}

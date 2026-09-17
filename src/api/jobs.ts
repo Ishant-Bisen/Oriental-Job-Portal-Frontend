@@ -1,5 +1,9 @@
 import { apiGet } from '@/lib/api'
 
+/** Matches Swagger `JobResponse.status`. */
+export type JobStatus = 'ACTIVE' | 'INACTIVE'
+
+/** Matches Swagger `JobResponse`. */
 export type Job = {
   id: number
   title: string
@@ -9,19 +13,46 @@ export type Job = {
   salary?: string
   jobType?: string
   department?: string
+  status?: JobStatus
   postedDate?: string
   applicationDeadline?: string
   displayPicture?: string
   createdAt?: string
+  updatedAt?: string
 }
 
+/** Matches Swagger `PublicJobListResponse`. */
 export type PublicJobs = {
   jobs: Job[]
   totalJobCount: number
   loginRequiredToSeeMore: boolean
 }
 
-const PATH = '/api/public/jobs'
+/** Matches Swagger `PageJobResponse` (authenticated `GET /api/jobs`). */
+export type JobsPage = {
+  content: Job[]
+  totalElements: number
+  totalPages: number
+  number: number
+  size: number
+  first: boolean
+  last: boolean
+  empty: boolean
+}
+
+export type JobsQuery = {
+  q?: string
+  location?: string
+  companyName?: string
+  jobType?: string
+  department?: string
+  page?: number
+  size?: number
+  sort?: string
+}
+
+const PUBLIC_PATH = '/api/public/jobs'
+const AUTH_PATH = '/api/jobs'
 const TTL_MS = 30_000
 
 let cached: { at: number; data: PublicJobs } | null = null
@@ -34,7 +65,7 @@ export function fetchPublicJobs(force = false) {
 
   if (!force && inflight) return inflight
 
-  inflight = apiGet<PublicJobs>(PATH)
+  inflight = apiGet<PublicJobs>(PUBLIC_PATH)
     .then((data) => {
       const next: PublicJobs = {
         jobs: data.jobs ?? [],
@@ -49,6 +80,21 @@ export function fetchPublicJobs(force = false) {
     })
 
   return inflight
+}
+
+/** Authenticated full job list — Spring `Pageable` query params. */
+export function fetchJobs(query: JobsQuery = {}) {
+  const params = new URLSearchParams()
+  if (query.q) params.set('q', query.q)
+  if (query.location) params.set('location', query.location)
+  if (query.companyName) params.set('companyName', query.companyName)
+  if (query.jobType) params.set('jobType', query.jobType)
+  if (query.department) params.set('department', query.department)
+  params.set('page', String(query.page ?? 0))
+  params.set('size', String(query.size ?? 50))
+  if (query.sort) params.set('sort', query.sort)
+
+  return apiGet<JobsPage>(`${AUTH_PATH}?${params.toString()}`)
 }
 
 const DAY = 86_400_000

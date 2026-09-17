@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom'
 import { daysUntil, postedTime, salaryValue, uniqueValues, type Job } from '@/api/jobs'
 import { JobCard } from '@/components/jobs/JobCard'
 import { JobModal } from '@/components/jobs/JobModal'
-import { usePublicJobs } from '@/hooks/usePublicJobs'
+import { useJobsBoard } from '@/hooks/useJobsBoard'
 import { cn } from '@/lib/utils'
 
 type SortKey = 'recent' | 'deadline' | 'package'
@@ -16,7 +16,7 @@ const sorts: { key: SortKey; label: string }[] = [
 ]
 
 export default function JobsPage() {
-  const { jobs, totalJobCount, loginRequiredToSeeMore, loading, error, reload } = usePublicJobs()
+  const { jobs, totalJobCount, loginRequiredToSeeMore, loading, error, reload } = useJobsBoard()
   const [query, setQuery] = useState('')
   const [dept, setDept] = useState('All')
   const [type, setType] = useState('All')
