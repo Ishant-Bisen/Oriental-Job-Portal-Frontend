@@ -1,6 +1,7 @@
-import { CheckCircle2, IndianRupee, Loader2, MapPin, Sparkles } from 'lucide-react'
+import { CheckCircle2, FileWarning, IndianRupee, Loader2, MapPin, Sparkles } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
+import { fetchCandidateProfile, hasResume } from '@/api/candidate'
 import {
   applyToJob,
   daysUntil,
@@ -19,6 +20,7 @@ export function JobModal({ job, open, onClose }: { job: Job | null; open: boolea
   const [applying, setApplying] = useState(false)
   const [applied, setApplied] = useState(false)
   const [checking, setChecking] = useState(false)
+  const [hasResumeOnFile, setHasResumeOnFile] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
   const isCandidate = isAuthenticated && /candidate|student/i.test(user?.role ?? '')
@@ -29,17 +31,21 @@ export function JobModal({ job, open, onClose }: { job: Job | null; open: boolea
     setApplied(false)
     setError(null)
     setChecking(false)
+    setHasResumeOnFile(true)
 
     if (!open || !job || !isCandidate) return
 
     let cancelled = false
     setChecking(true)
-    fetchMyApplications()
-      .then((apps) => {
-        if (!cancelled && hasActiveApplication(apps, job.id)) setApplied(true)
+
+    Promise.all([fetchMyApplications(), fetchCandidateProfile()])
+      .then(([apps, profile]) => {
+        if (cancelled) return
+        if (hasActiveApplication(apps, job.id)) setApplied(true)
+        setHasResumeOnFile(hasResume(profile))
       })
       .catch(() => {
-        /* Ignore — apply button still works without prior status. */
+        /* Ignore — apply still attempts; backend also enforces resume. */
       })
       .finally(() => {
         if (!cancelled) setChecking(false)
@@ -58,6 +64,10 @@ export function JobModal({ job, open, onClose }: { job: Job | null; open: boolea
 
   async function handleApply() {
     if (!job || applying || applied) return
+    if (!hasResumeOnFile) {
+      setError('Add your resume on your profile before applying.')
+      return
+    }
     setApplying(true)
     setError(null)
     try {
@@ -151,6 +161,12 @@ export function JobModal({ job, open, onClose }: { job: Job | null; open: boolea
 
       <div className="flex shrink-0 flex-col gap-3 border-t border-white/[0.07] bg-ink-900/95 px-6 py-4 sm:px-8">
         {error ? <p className="text-[12px] font-medium text-neon-pink">{error}</p> : null}
+        {isCandidate && !checking && !applied && !deadlinePassed && !hasResumeOnFile ? (
+          <p className="flex items-start gap-2 text-[12px] text-amber-200/90">
+            <FileWarning className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+            A resume is required before you can apply. Add it on your profile, then come back.
+          </p>
+        ) : null}
 
         <div className="flex flex-wrap items-center gap-3">
           <div className="mr-auto">
@@ -175,11 +191,15 @@ export function JobModal({ job, open, onClose }: { job: Job | null; open: boolea
               <CheckCircle2 className="h-3.5 w-3.5" />
               Applied
             </span>
+          ) : isCandidate && !hasResumeOnFile && !checking ? (
+            <Link to="/profile" onClick={onClose} className="btn-primary text-[12.5px]">
+              Add resume to apply
+            </Link>
           ) : isCandidate ? (
             <button
               type="button"
               onClick={handleApply}
-              disabled={applying || checking}
+              disabled={applying || checking || !hasResumeOnFile}
               className="btn-primary text-[12.5px] disabled:cursor-not-allowed disabled:opacity-60"
             >
               {applying || checking ? (

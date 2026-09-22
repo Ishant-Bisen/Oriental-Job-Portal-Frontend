@@ -40,3 +40,9 @@ export function displayName(profile: Pick<CandidateProfile, 'firstName' | 'lastN
   const name = [profile.firstName, profile.lastName].filter(Boolean).join(' ').trim()
   return name || profile.email
 }
+
+/** True when the candidate has a non-empty resume URL on their profile. */
+export function hasResume(profile?: Pick<CandidateProfile, 'resumePdf'> | null) {
+  return Boolean(profile?.resumePdf?.trim())
+}
+

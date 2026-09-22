@@ -20,6 +20,7 @@ import { Modal } from '@/components/ui/Modal'
 import { LogoTile, MeterBar, SectionHeading } from '@/components/ui/primitives'
 import { Reveal } from '@/components/ui/Reveal'
 import { fetchCampusCalendar } from '@/api/calendar'
+import { fetchCandidateProfile, hasResume } from '@/api/candidate'
 import { applyToJob, fetchMyApplications, hasActiveApplication } from '@/api/jobs'
 import { useAuth } from '@/auth/AuthProvider'
 import { ApiError } from '@/lib/api'
@@ -433,6 +434,7 @@ function EventModal({
   const [applying, setApplying] = useState(false)
   const [applied, setApplied] = useState(false)
   const [applyError, setApplyError] = useState<string | null>(null)
+  const [hasResumeOnFile, setHasResumeOnFile] = useState(true)
 
   const jobIdNum = Number(event?.company?.jobId)
   const canApplyApi = Number.isFinite(jobIdNum) && jobIdNum > 0
@@ -442,17 +444,20 @@ function EventModal({
     setApplying(false)
     setApplied(false)
     setApplyError(null)
+    setHasResumeOnFile(true)
   }, [event?.id, open])
 
   useEffect(() => {
     if (!open || !canApplyApi || !isCandidate) return
     let cancelled = false
-    fetchMyApplications()
-      .then((apps) => {
-        if (!cancelled && hasActiveApplication(apps, jobIdNum)) setApplied(true)
+    Promise.all([fetchMyApplications(), fetchCandidateProfile()])
+      .then(([apps, profile]) => {
+        if (cancelled) return
+        if (hasActiveApplication(apps, jobIdNum)) setApplied(true)
+        setHasResumeOnFile(hasResume(profile))
       })
       .catch(() => {
-        /* ignore — apply CTA still works */
+        /* ignore — apply CTA still works; backend also enforces resume */
       })
     return () => {
       cancelled = true
@@ -461,6 +466,10 @@ function EventModal({
 
   async function handleApply() {
     if (!canApplyApi || applying || applied) return
+    if (!hasResumeOnFile) {
+      setApplyError('Add your resume on your profile before applying.')
+      return
+    }
     setApplying(true)
     setApplyError(null)
     try {
@@ -603,11 +612,19 @@ function EventModal({
                 <CheckCircle2 className="h-3.5 w-3.5" />
                 Applied
               </span>
+            ) : canApplyApi && isCandidate && !hasResumeOnFile ? (
+              <Link
+                to="/profile"
+                onClick={onClose}
+                className="btn bg-gradient-to-r from-brand-500 to-neon-violet px-5 py-2.5 text-[12.5px] text-white shadow-glow"
+              >
+                Add resume to apply
+              </Link>
             ) : canApplyApi && isCandidate ? (
               <button
                 type="button"
                 onClick={handleApply}
-                disabled={applying}
+                disabled={applying || !hasResumeOnFile}
                 className="btn bg-gradient-to-r from-brand-500 to-neon-violet px-5 py-2.5 text-[12.5px] text-white shadow-glow disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {applying ? (
