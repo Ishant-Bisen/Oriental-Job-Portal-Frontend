@@ -95,3 +95,15 @@ export function apiPost<T>(path: string, body?: unknown, init?: RequestOptions) 
     body: body === undefined ? undefined : JSON.stringify(body),
   })
 }
+
+export function apiPut<T>(path: string, body?: unknown, init?: RequestOptions) {
+  return request<T>(path, {
+    ...init,
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+      ...init?.headers,
+    },
+    body: body === undefined ? undefined : JSON.stringify(body),
+  })
+}

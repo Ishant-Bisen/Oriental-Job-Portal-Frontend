@@ -1,4 +1,4 @@
-import { apiGet } from '@/lib/api'
+import { apiGet, apiPost } from '@/lib/api'
 
 /** Matches Swagger `JobResponse.status`. */
 export type JobStatus = 'ACTIVE' | 'INACTIVE'
@@ -95,6 +95,81 @@ export function fetchJobs(query: JobsQuery = {}) {
   if (query.sort) params.set('sort', query.sort)
 
   return apiGet<JobsPage>(`${AUTH_PATH}?${params.toString()}`)
+}
+
+/** Matches Swagger `CandidateApplicationResponse`. */
+export type JobApplication = {
+  applicationId: number
+  jobId: number
+  jobTitle: string
+  department?: string
+  jobType?: string
+  profilePicture?: string
+  appliedAt: string
+  status: string
+  canWithdraw: boolean
+}
+
+/** Candidate apply — `POST /api/jobs/{id}/apply` (no body). */
+export function applyToJob(jobId: number) {
+  return apiPost<JobApplication>(`${AUTH_PATH}/${jobId}/apply`)
+}
+
+/** Candidate’s applications — `GET /api/candidate/applications`. */
+export function fetchMyApplications(filters?: { department?: string; jobType?: string }) {
+  const params = new URLSearchParams()
+  if (filters?.department) params.set('department', filters.department)
+  if (filters?.jobType) params.set('jobType', filters.jobType)
+  const qs = params.toString()
+  return apiGet<JobApplication[]>(`/api/candidate/applications${qs ? `?${qs}` : ''}`)
+}
+
+/** True when the candidate already has a non-withdrawn application for this job. */
+export function hasActiveApplication(apps: JobApplication[], jobId: number) {
+  return apps.some(
+    (app) => app.jobId === jobId && !/withdrawn/i.test(app.status ?? ''),
+  )
+}
+
+/** Withdraw — `POST /api/candidate/applications/{id}/withdraw`. */
+export function withdrawApplication(applicationId: number) {
+  return apiPost<JobApplication>(`/api/candidate/applications/${applicationId}/withdraw`)
+}
+
+export type ApplicationStatusKey =
+  | 'APPLIED'
+  | 'REVIEWED'
+  | 'SHORTLISTED'
+  | 'REJECTED'
+  | 'WITHDRAWN'
+  | 'ACCEPTED'
+
+export function normalizeApplicationStatus(status?: string): ApplicationStatusKey {
+  const key = (status ?? 'APPLIED').toUpperCase() as ApplicationStatusKey
+  const known: ApplicationStatusKey[] = [
+    'APPLIED',
+    'REVIEWED',
+    'SHORTLISTED',
+    'REJECTED',
+    'WITHDRAWN',
+    'ACCEPTED',
+  ]
+  return known.includes(key) ? key : 'APPLIED'
+}
+
+export function countApplicationsByStatus(apps: JobApplication[]) {
+  const counts: Record<ApplicationStatusKey, number> = {
+    APPLIED: 0,
+    REVIEWED: 0,
+    SHORTLISTED: 0,
+    REJECTED: 0,
+    WITHDRAWN: 0,
+    ACCEPTED: 0,
+  }
+  for (const app of apps) {
+    counts[normalizeApplicationStatus(app.status)] += 1
+  }
+  return counts
 }
 
 const DAY = 86_400_000

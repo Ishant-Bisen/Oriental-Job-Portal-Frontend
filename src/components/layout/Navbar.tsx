@@ -1,12 +1,12 @@
 import { AnimatePresence, motion, useMotionValueEvent, useScroll } from 'framer-motion'
-import { Building2, GraduationCap, LogOut, Menu, Sparkles, X } from 'lucide-react'
+import { Building2, GraduationCap, LogOut, Menu, Sparkles, UserRound, X } from 'lucide-react'
 import { useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '@/auth/AuthProvider'
 import { BridgeMark } from '@/components/fx/ScreenFX'
 import { cn } from '@/lib/utils'
 
-const links = [
+const guestLinks = [
   { label: 'About', to: '/#about' },
   { label: 'Updates', to: '/#updates' },
   { label: 'Jobs', to: '/jobs' },
@@ -14,6 +14,13 @@ const links = [
   { label: 'Recruiters', to: '/#recruiters' },
   { label: 'Placements', to: '/#stats' },
   { label: 'Why us', to: '/#advantage' },
+]
+
+const studentLinks = [
+  { label: 'Updates', to: '/#updates' },
+  { label: 'Jobs', to: '/jobs' },
+  { label: 'Events', to: '/#events' },
+  { label: 'Profile', to: '/profile' },
 ]
 
 export function Navbar() {
@@ -24,6 +31,8 @@ export function Navbar() {
   const { pathname } = useLocation()
   const navigate = useNavigate()
   const { user, isAuthenticated, logout } = useAuth()
+  const isCandidate = isAuthenticated && /candidate|student/i.test(user?.role ?? '')
+  const links = isCandidate ? studentLinks : guestLinks
 
   useMotionValueEvent(scrollY, 'change', (v) => setScrolled(v > 40))
 
@@ -164,13 +173,24 @@ export function Navbar() {
                   </motion.button>
                 ))}
                 {isAuthenticated ? (
-                  <button
-                    onClick={() => void onLogout()}
-                    className="mt-1 flex items-center gap-2 rounded-xl px-4 py-3 text-sm font-semibold text-neon-pink transition hover:bg-white/5"
-                  >
-                    <LogOut className="h-3.5 w-3.5" />
-                    Logout
-                  </button>
+                  <>
+                    {isCandidate && (
+                      <button
+                        onClick={() => go('/profile')}
+                        className="mt-1 flex items-center gap-2 rounded-xl px-4 py-3 text-sm font-semibold text-white transition hover:bg-white/5"
+                      >
+                        <UserRound className="h-3.5 w-3.5" />
+                        My profile
+                      </button>
+                    )}
+                    <button
+                      onClick={() => void onLogout()}
+                      className="flex items-center gap-2 rounded-xl px-4 py-3 text-sm font-semibold text-neon-pink transition hover:bg-white/5"
+                    >
+                      <LogOut className="h-3.5 w-3.5" />
+                      Logout
+                    </button>
+                  </>
                 ) : (
                   <>
                     <button

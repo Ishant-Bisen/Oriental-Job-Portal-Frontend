@@ -36,6 +36,7 @@ export function JobCard({ job, onOpen }: { job: Job; onOpen: () => void }) {
         </div>
       </div>
 
+      {/* meta row */}
       <div className="relative mt-4 flex flex-wrap items-center gap-x-4 gap-y-2 text-[11.5px] text-slate-400">
         {job.location && (
           <span className="flex items-center gap-1.5">

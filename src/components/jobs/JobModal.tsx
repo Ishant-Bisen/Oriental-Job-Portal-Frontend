@@ -1,14 +1,84 @@
-import { IndianRupee, MapPin, Sparkles } from 'lucide-react'
+import { CheckCircle2, IndianRupee, Loader2, MapPin, Sparkles } from 'lucide-react'
+import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { daysUntil, postedLabel, type Job } from '@/api/jobs'
+import {
+  applyToJob,
+  daysUntil,
+  fetchMyApplications,
+  hasActiveApplication,
+  postedLabel,
+  type Job,
+} from '@/api/jobs'
+import { useAuth } from '@/auth/AuthProvider'
 import { Modal } from '@/components/ui/Modal'
 import { LogoTile } from '@/components/ui/primitives'
+import { ApiError } from '@/lib/api'
 
 export function JobModal({ job, open, onClose }: { job: Job | null; open: boolean; onClose: () => void }) {
+  const { isAuthenticated, user } = useAuth()
+  const [applying, setApplying] = useState(false)
+  const [applied, setApplied] = useState(false)
+  const [checking, setChecking] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  const isCandidate = isAuthenticated && /candidate|student/i.test(user?.role ?? '')
+  const isRecruiter = isAuthenticated && /admin|recruiter|placement/i.test(user?.role ?? '')
+
+  useEffect(() => {
+    setApplying(false)
+    setApplied(false)
+    setError(null)
+    setChecking(false)
+
+    if (!open || !job || !isCandidate) return
+
+    let cancelled = false
+    setChecking(true)
+    fetchMyApplications()
+      .then((apps) => {
+        if (!cancelled && hasActiveApplication(apps, job.id)) setApplied(true)
+      })
+      .catch(() => {
+        /* Ignore — apply button still works without prior status. */
+      })
+      .finally(() => {
+        if (!cancelled) setChecking(false)
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [job?.id, open, isCandidate])
+
   if (!job) return null
 
   const posted = postedLabel(job)
   const deadline = daysUntil(job.applicationDeadline)
+  const deadlinePassed = deadline != null && deadline < 0
+
+  async function handleApply() {
+    if (!job || applying || applied) return
+    setApplying(true)
+    setError(null)
+    try {
+      await applyToJob(job.id)
+      setApplied(true)
+    } catch (err) {
+      const message =
+        err instanceof ApiError
+          ? err.message
+          : err instanceof Error
+            ? err.message
+            : 'Could not submit application'
+      if (/already applied/i.test(message)) {
+        setApplied(true)
+      } else {
+        setError(message)
+      }
+    } finally {
+      setApplying(false)
+    }
+  }
 
   return (
     <Modal open={open} onClose={onClose} labelledBy="job-modal-title" className="max-w-3xl">
@@ -36,10 +106,17 @@ export function JobModal({ job, open, onClose }: { job: Job | null; open: boolea
               {deadline != null && (
                 <>
                   {' '}
-                  · Closes in{' '}
-                  <span className={deadline <= 4 ? 'font-semibold text-neon-pink' : 'text-slate-300'}>
-                    {deadline} days
-                  </span>
+                  ·{' '}
+                  {deadlinePassed ? (
+                    <span className="font-semibold text-neon-pink">Closed</span>
+                  ) : (
+                    <>
+                      Closes in{' '}
+                      <span className={deadline <= 4 ? 'font-semibold text-neon-pink' : 'text-slate-300'}>
+                        {deadline} days
+                      </span>
+                    </>
+                  )}
                 </>
               )}
             </p>
@@ -72,14 +149,54 @@ export function JobModal({ job, open, onClose }: { job: Job | null; open: boolea
         </section>
       </div>
 
-      <div className="flex shrink-0 flex-wrap items-center gap-3 border-t border-white/[0.07] bg-ink-900/95 px-6 py-4 sm:px-8">
-        <div className="mr-auto">
-          <p className="text-[11px] uppercase tracking-wide text-slate-500">Package</p>
-          <p className="font-display text-[15px] font-bold text-white">{job.salary || 'Not disclosed'}</p>
+      <div className="flex shrink-0 flex-col gap-3 border-t border-white/[0.07] bg-ink-900/95 px-6 py-4 sm:px-8">
+        {error ? <p className="text-[12px] font-medium text-neon-pink">{error}</p> : null}
+
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="mr-auto">
+            <p className="text-[11px] uppercase tracking-wide text-slate-500">Package</p>
+            <p className="font-display text-[15px] font-bold text-white">{job.salary || 'Not disclosed'}</p>
+          </div>
+
+          {!isAuthenticated ? (
+            <Link to="/login" onClick={onClose} className="btn-primary text-[12.5px]">
+              Sign in to apply
+            </Link>
+          ) : isRecruiter ? (
+            <span className="rounded-full border border-white/10 bg-white/[0.04] px-4 py-2 text-[12px] text-slate-400">
+              Recruiters can’t apply to jobs
+            </span>
+          ) : deadlinePassed ? (
+            <span className="rounded-full border border-neon-pink/30 bg-neon-pink/10 px-4 py-2 text-[12px] font-semibold text-neon-pink">
+              Applications closed
+            </span>
+          ) : applied ? (
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-neon-lime/30 bg-neon-lime/10 px-4 py-2 text-[12.5px] font-semibold text-neon-lime">
+              <CheckCircle2 className="h-3.5 w-3.5" />
+              Applied
+            </span>
+          ) : isCandidate ? (
+            <button
+              type="button"
+              onClick={handleApply}
+              disabled={applying || checking}
+              className="btn-primary text-[12.5px] disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {applying || checking ? (
+                <>
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  {applying ? 'Applying…' : 'Checking…'}
+                </>
+              ) : (
+                'Apply now'
+              )}
+            </button>
+          ) : (
+            <Link to="/login" onClick={onClose} className="btn-primary text-[12.5px]">
+              Sign in as student to apply
+            </Link>
+          )}
         </div>
-        <Link to="/login" onClick={onClose} className="btn-primary text-[12.5px]">
-          Sign in to apply
-        </Link>
       </div>
     </Modal>
   )

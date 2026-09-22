@@ -40,7 +40,7 @@ export default function LoginPage() {
     setSubmitting(true)
     try {
       await loginAsStudent(identifier, password)
-      navigate('/jobs', { replace: true })
+      navigate('/profile', { replace: true })
     } catch (err) {
       setError(err instanceof ApiError ? err.message : 'Sign-in failed. Please try again.')
     } finally {
@@ -84,10 +84,15 @@ export default function LoginPage() {
               <div className="rounded-2xl border border-brand-400/25 bg-brand-500/10 px-4 py-5 text-center">
                 <p className="text-[13px] font-semibold text-brand-100">Signed in as {user.email}</p>
                 <p className="mt-1 text-[12px] text-slate-400">Role: {user.role}</p>
-                <Link to="/jobs" className="btn-primary mt-5 inline-flex">
-                  Continue to jobs
-                  <ArrowRight className="h-4 w-4" />
-                </Link>
+                <div className="mt-5 flex flex-wrap justify-center gap-3">
+                  <Link to="/profile" className="btn-primary inline-flex">
+                    Go to profile
+                    <ArrowRight className="h-4 w-4" />
+                  </Link>
+                  <Link to="/jobs" className="btn-ghost inline-flex">
+                    Jobs board
+                  </Link>
+                </div>
               </div>
             ) : (
               <>

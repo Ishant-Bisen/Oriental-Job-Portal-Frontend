@@ -10,8 +10,24 @@ import { Portals } from '@/components/sections/Portals'
 import { Recruiters } from '@/components/sections/Recruiters'
 import { Services } from '@/components/sections/Services'
 import { Stats } from '@/components/sections/Stats'
+import { StudentHero } from '@/components/sections/StudentHero'
+import { useAuth } from '@/auth/AuthProvider'
 
 export default function Landing() {
+  const { isAuthenticated, user } = useAuth()
+  const isStudent = isAuthenticated && /candidate|student/i.test(user?.role ?? '')
+
+  if (isStudent) {
+    return (
+      <>
+        <StudentHero />
+        <Notifications />
+        <JobsPreview />
+        <EventsCalendar />
+      </>
+    )
+  }
+
   return (
     <>
       <Hero />

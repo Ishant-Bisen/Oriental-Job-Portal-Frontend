@@ -207,6 +207,12 @@ export const campusEvents: CampusEvent[] = [
   },
 ]
 
+
+/** Non-drive campus activities kept as mock until the events API ships. */
+export const workshopEvents: CampusEvent[] = campusEvents.filter(
+  (e) => e.kind === 'workshop' || e.kind === 'seminar' || e.kind === 'hackathon',
+)
+
 export const eventKindMeta: Record<
   EventKind,
   { label: string; dot: string; text: string; ring: string; soft: string }

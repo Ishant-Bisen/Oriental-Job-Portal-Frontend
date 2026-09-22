@@ -69,6 +69,12 @@ export function clearSession() {
   writeSession(null, null)
 }
 
+/** Keep local session in sync when profile contact fields change. */
+export function patchSession(partial: Partial<Pick<AuthSession, 'email'>>) {
+  if (!session) return
+  writeSession({ ...session, ...partial })
+}
+
 export function isAdminRole(role: string) {
   return /admin|recruiter|placement/i.test(role)
 }

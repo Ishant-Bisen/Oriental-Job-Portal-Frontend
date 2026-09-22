@@ -63,7 +63,7 @@ export default function RegisterPage() {
         firstName: firstName.trim(),
         lastName: lastName.trim(),
       })
-      navigate('/jobs', { replace: true })
+      navigate('/profile', { replace: true })
     } catch (err) {
       if (err instanceof ApiError) {
         const fieldMsg = err.fieldErrors ? Object.values(err.fieldErrors)[0] : null

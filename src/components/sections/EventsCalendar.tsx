@@ -8,16 +8,22 @@ import {
   Clock,
   MapPin,
   Mic2,
+  CheckCircle2,
+  Loader2,
   Send,
   Ticket,
   Users2,
 } from 'lucide-react'
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Modal } from '@/components/ui/Modal'
 import { LogoTile, MeterBar, SectionHeading } from '@/components/ui/primitives'
 import { Reveal } from '@/components/ui/Reveal'
-import { campusEvents, eventDate, eventKindMeta, type CampusEvent } from '@/data/events'
+import { fetchCampusCalendar } from '@/api/calendar'
+import { applyToJob, fetchMyApplications, hasActiveApplication } from '@/api/jobs'
+import { useAuth } from '@/auth/AuthProvider'
+import { ApiError } from '@/lib/api'
+import { eventDate, eventKindMeta, type CampusEvent } from '@/data/events'
 import { cn, relativeDayLabel } from '@/lib/utils'
 
 const dayKey = (d: Date) => `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`
@@ -34,15 +40,36 @@ export function EventsCalendar() {
   const [selected, setSelected] = useState<string>(dayKey(today))
   const [active, setActive] = useState<CampusEvent | null>(null)
   const [registered, setRegistered] = useState<string[]>([])
+  const [events, setEvents] = useState<CampusEvent[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    let cancelled = false
+    setLoading(true)
+    // Two sources: drives (jobs API) + workshops (mock until events API exists)
+    fetchCampusCalendar()
+      .then((items) => {
+        if (!cancelled) setEvents(items)
+      })
+      .catch(() => {
+        if (!cancelled) setEvents([])
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [])
 
   const byDay = useMemo(() => {
     const map = new Map<string, CampusEvent[]>()
-    campusEvents.forEach((e) => {
+    events.forEach((e) => {
       const key = dayKey(eventDate(e.dayOffset))
       map.set(key, [...(map.get(key) ?? []), e])
     })
     return map
-  }, [])
+  }, [events])
 
   const cells = useMemo(() => {
     const first = new Date(view.getFullYear(), view.getMonth(), 1)
@@ -54,8 +81,19 @@ export function EventsCalendar() {
     return out
   }, [view])
 
+  const UPCOMING_MAX = 8
+  /** Only show events/jobs within this many days from today. */
+  const UPCOMING_NEAR_DAYS = 14
+
   const selectedEvents = byDay.get(selected) ?? []
-  const upcoming = campusEvents.slice().sort((a, b) => a.dayOffset - b.dayOffset)
+  const upcoming = useMemo(
+    () =>
+      events
+        .filter((e) => e.dayOffset >= 0 && e.dayOffset <= UPCOMING_NEAR_DAYS)
+        .sort((a, b) => a.dayOffset - b.dayOffset || a.title.localeCompare(b.title))
+        .slice(0, UPCOMING_MAX),
+    [events],
+  )
 
   return (
     <section id="events" className="section-pad relative">
@@ -64,7 +102,7 @@ export function EventsCalendar() {
           eyebrow="Campus calendar"
           title="Drives, workshops and deadlines"
           highlight="on one timeline."
-          description="Pick a date to see what is happening. Workshops open a seat for you instantly; placement drives show the company, package and eligibility before you apply."
+          description="Placement drives come from live job openings. Workshops and talks stay on the mock feed until the events API is ready."
         />
 
         <div className="mt-14 grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)]">
@@ -80,7 +118,7 @@ export function EventsCalendar() {
                     {view.toLocaleDateString('en-IN', { month: 'long', year: 'numeric' })}
                   </h3>
                   <p className="mt-1 text-[11.5px] text-slate-500">
-                    {campusEvents.length} events scheduled this cycle
+                    {loading ? 'Loading…' : `${events.length} events scheduled this cycle`}
                   </p>
                 </div>
                 <div className="flex gap-1.5">
@@ -212,11 +250,28 @@ export function EventsCalendar() {
                 </span>
                 <div className="mr-auto">
                   <h3 className="text-[14.5px] font-bold text-white">Upcoming & open for registration</h3>
-                  <p className="text-[11px] text-slate-500">{registered.length} registered by you</p>
+                  <p className="text-[11px] text-slate-500">
+                    {loading
+                      ? 'Loading…'
+                      : upcoming.length
+                        ? `Nearest ${upcoming.length} · next ${UPCOMING_NEAR_DAYS} days`
+                        : 'Nothing near today'}
+                    {registered.length ? ` · ${registered.length} registered by you` : ''}
+                  </p>
                 </div>
               </div>
 
               <div className="no-scrollbar max-h-[34rem] space-y-3 overflow-y-auto p-4">
+                {loading ? (
+                  <p className="rounded-2xl border border-white/[0.06] bg-white/[0.02] px-4 py-8 text-center text-[12px] text-slate-500">
+                    Loading campus drives and workshops…
+                  </p>
+                ) : null}
+                {!loading && !upcoming.length ? (
+                  <p className="rounded-2xl border border-white/[0.06] bg-white/[0.02] px-4 py-8 text-center text-[12px] text-slate-500">
+                    No drives or workshops in the next {UPCOMING_NEAR_DAYS} days.
+                  </p>
+                ) : null}
                 {upcoming.map((e, i) => {
                   const meta = eventKindMeta[e.kind]
                   const date = eventDate(e.dayOffset)
@@ -374,6 +429,57 @@ function EventModal({
   registered: boolean
   onRegister: (id: string) => void
 }) {
+  const { isAuthenticated, user } = useAuth()
+  const [applying, setApplying] = useState(false)
+  const [applied, setApplied] = useState(false)
+  const [applyError, setApplyError] = useState<string | null>(null)
+
+  const jobIdNum = Number(event?.company?.jobId)
+  const canApplyApi = Number.isFinite(jobIdNum) && jobIdNum > 0
+  const isCandidate = isAuthenticated && /candidate|student/i.test(user?.role ?? '')
+
+  useEffect(() => {
+    setApplying(false)
+    setApplied(false)
+    setApplyError(null)
+  }, [event?.id, open])
+
+  useEffect(() => {
+    if (!open || !canApplyApi || !isCandidate) return
+    let cancelled = false
+    fetchMyApplications()
+      .then((apps) => {
+        if (!cancelled && hasActiveApplication(apps, jobIdNum)) setApplied(true)
+      })
+      .catch(() => {
+        /* ignore — apply CTA still works */
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [open, canApplyApi, isCandidate, jobIdNum])
+
+  async function handleApply() {
+    if (!canApplyApi || applying || applied) return
+    setApplying(true)
+    setApplyError(null)
+    try {
+      await applyToJob(jobIdNum)
+      setApplied(true)
+    } catch (err) {
+      const message =
+        err instanceof ApiError
+          ? err.message
+          : err instanceof Error
+            ? err.message
+            : 'Could not submit application'
+      if (/already applied/i.test(message)) setApplied(true)
+      else setApplyError(message)
+    } finally {
+      setApplying(false)
+    }
+  }
+
   if (!event) return null
   const meta = eventKindMeta[event.kind]
   const date = eventDate(event.dayOffset)
@@ -478,6 +584,8 @@ function EventModal({
           {isDrive ? 'Registration is mandatory to attend this drive.' : 'Certificate issued on completion.'}
         </p>
 
+        {applyError ? <p className="w-full text-[12px] font-medium text-neon-pink">{applyError}</p> : null}
+
         {isDrive ? (
           <>
             {event.company?.jobId && (
@@ -486,10 +594,40 @@ function EventModal({
                 <ArrowRight className="h-3.5 w-3.5" />
               </Link>
             )}
-            <button className="btn bg-gradient-to-r from-brand-500 to-neon-violet px-5 py-2.5 text-[12.5px] text-white shadow-glow">
-              <Send className="h-3.5 w-3.5" />
-              Apply for this drive
-            </button>
+            {!isAuthenticated ? (
+              <Link to="/login" onClick={onClose} className="btn bg-gradient-to-r from-brand-500 to-neon-violet px-5 py-2.5 text-[12.5px] text-white shadow-glow">
+                Sign in to apply
+              </Link>
+            ) : applied ? (
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-neon-lime/30 bg-neon-lime/10 px-4 py-2 text-[12.5px] font-semibold text-neon-lime">
+                <CheckCircle2 className="h-3.5 w-3.5" />
+                Applied
+              </span>
+            ) : canApplyApi && isCandidate ? (
+              <button
+                type="button"
+                onClick={handleApply}
+                disabled={applying}
+                className="btn bg-gradient-to-r from-brand-500 to-neon-violet px-5 py-2.5 text-[12.5px] text-white shadow-glow disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {applying ? (
+                  <>
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    Applying…
+                  </>
+                ) : (
+                  <>
+                    <Send className="h-3.5 w-3.5" />
+                    Apply for this drive
+                  </>
+                )}
+              </button>
+            ) : (
+              <Link to="/jobs" className="btn bg-gradient-to-r from-brand-500 to-neon-violet px-5 py-2.5 text-[12.5px] text-white shadow-glow">
+                <Send className="h-3.5 w-3.5" />
+                Open jobs board
+              </Link>
+            )}
           </>
         ) : (
           <button

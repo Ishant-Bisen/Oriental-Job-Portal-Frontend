@@ -1,118 +1,196 @@
-export type UpdateKind = 'drive' | 'result' | 'deadline' | 'workshop' | 'notice' | 'offer'
+/** Content tags — must match backend `UpdateTag` enum. */
+export const UPDATE_TAGS = [
+  'OFFER',
+  'JOB',
+  'NOTICE',
+  'DRIVE',
+  'RESULT',
+  'UPDATE',
+  'WORKSHOP',
+] as const
+
+export type UpdateTag = (typeof UPDATE_TAGS)[number]
+
+/**
+ * Situational filter flags — shown as chips and used to filter the feed /
+ * power the “Needs your attention” spotlight.
+ */
+export const UPDATE_FLAGS = [
+  'ATTENTION_NEEDED',
+  'CLOSING_SOON',
+  'NEED_YOUR_ATTENTION',
+] as const
+
+export type UpdateFlag = (typeof UPDATE_FLAGS)[number]
 
 export type Update = {
   id: string
-  kind: UpdateKind
+  tag: UpdateTag
   title: string
-  detail: string
+  description: string
   time: string
   companySlug?: string
-  pinned?: boolean
-  urgent?: boolean
-  meta?: string
+  flags?: UpdateFlag[]
+  appliedCount?: number | null
+  registrationCount?: number | null
+  shortlistedCount?: number | null
+  totalOpenings?: number | null
+  /** Prefer server `metaLabel` when present; otherwise computed via {@link buildMetaLabel}. */
+  metaLabel?: string
+}
+
+/**
+ * One-line live status for the UI.
+ * Priority: shortlisted → applied → registered / registration open → openings/seats → flags.
+ */
+export function buildMetaLabel(update: Pick<
+  Update,
+  | 'metaLabel'
+  | 'shortlistedCount'
+  | 'appliedCount'
+  | 'registrationCount'
+  | 'totalOpenings'
+  | 'flags'
+>): string {
+  if (update.metaLabel?.trim()) return update.metaLabel.trim()
+
+  if (update.shortlistedCount != null && update.shortlistedCount > 0) {
+    return `${update.shortlistedCount} shortlisted`
+  }
+  if (update.appliedCount != null && update.appliedCount > 0) {
+    return `${update.appliedCount} applied`
+  }
+  if (update.registrationCount != null) {
+    if (update.registrationCount > 0) return `${update.registrationCount} registered`
+    return 'Registration open'
+  }
+  if (update.totalOpenings != null && update.totalOpenings > 0) {
+    return `${update.totalOpenings} openings`
+  }
+
+  const flags = update.flags ?? []
+  if (flags.includes('CLOSING_SOON')) return 'Closing soon'
+  if (flags.includes('ATTENTION_NEEDED') || flags.includes('NEED_YOUR_ATTENTION')) {
+    return 'Attention needed'
+  }
+  return ''
+}
+
+export function hasFlag(update: Update, flag: UpdateFlag) {
+  return update.flags?.includes(flag) ?? false
 }
 
 export const updates: Update[] = [
   {
     id: 'up-01',
-    kind: 'drive',
+    tag: 'DRIVE',
     title: 'Google drive schedule released',
-    detail:
+    description:
       'Slot allocation for the Core Platform drive is live. Reporting time is 08:30 at the Main Auditorium — check your slot letter on the portal.',
     time: '12 min ago',
     companySlug: 'google',
-    pinned: true,
-    urgent: true,
-    meta: '268 students shortlisted',
+    flags: ['NEED_YOUR_ATTENTION'],
+    shortlistedCount: 268,
   },
   {
     id: 'up-02',
-    kind: 'offer',
+    tag: 'OFFER',
     title: '14 offer letters rolled out by Microsoft',
-    detail:
+    description:
       'Azure SDE offers dispatched to registered emails. Acceptance window closes in 72 hours; upload the signed copy to your profile.',
     time: '48 min ago',
     companySlug: 'microsoft',
-    meta: 'Highest ₹48.2 LPA',
+    flags: ['CLOSING_SOON'],
+    appliedCount: 14,
   },
   {
     id: 'up-03',
-    kind: 'deadline',
+    tag: 'JOB',
     title: 'Adobe internship applications close tomorrow',
-    detail:
+    description:
       'Portfolio link is mandatory this cycle. Applications without a live project link will not move to the frontend assessment.',
     time: '2 hours ago',
     companySlug: 'adobe',
-    urgent: true,
-    meta: 'Closes 23:59 tomorrow',
+    flags: ['CLOSING_SOON', 'NEED_YOUR_ATTENTION'],
+    totalOpenings: 12,
   },
   {
     id: 'up-04',
-    kind: 'result',
+    tag: 'RESULT',
     title: 'Razorpay machine coding results published',
-    detail:
+    description:
       '41 students cleared the machine coding round and move to system design. Detailed scorecards are attached to your application.',
     time: '5 hours ago',
     companySlug: 'razorpay',
-    meta: '41 of 96 cleared',
+    shortlistedCount: 41,
   },
   {
     id: 'up-05',
-    kind: 'workshop',
-    title: 'System Design Bootcamp — 23 seats left',
-    detail:
+    tag: 'WORKSHOP',
+    title: 'System Design Bootcamp — seats filling fast',
+    description:
       'Level 1 covers caching, sharding and read scaling with two live design exercises. Certificates auto-attach to your TalentBridge profile.',
     time: '7 hours ago',
-    meta: '97 / 120 registered',
+    flags: ['CLOSING_SOON'],
+    registrationCount: 97,
   },
   {
     id: 'up-06',
-    kind: 'notice',
+    tag: 'NOTICE',
     title: 'Resume freeze for 2026 batch on Friday',
-    detail:
+    description:
       'Update your resume, projects and CGPA before the freeze. Post-freeze edits need placement-cell approval and take 48 hours.',
     time: '11 hours ago',
-    urgent: true,
-    meta: 'Action required',
+    flags: ['NEED_YOUR_ATTENTION'],
   },
   {
     id: 'up-07',
-    kind: 'drive',
+    tag: 'JOB',
     title: 'Bosch adds 8 more openings for ADAS',
-    detail:
+    description:
       'Openings increased from 16 to 24 after the pre-placement talk. ECE, EEE and Mechanical students can still register.',
     time: '1 day ago',
     companySlug: 'bosch',
-    meta: '24 openings now',
+    totalOpenings: 24,
   },
   {
     id: 'up-08',
-    kind: 'result',
+    tag: 'RESULT',
     title: 'Nvidia ML fundamentals shortlist out',
-    detail:
+    description:
       '62 students advance to the coding round. Round-2 slots open for booking on the calendar from this evening.',
     time: '1 day ago',
     companySlug: 'nvidia',
-    meta: '62 shortlisted',
+    flags: ['ATTENTION_NEEDED'],
+    shortlistedCount: 62,
   },
   {
     id: 'up-09',
-    kind: 'offer',
+    tag: 'OFFER',
     title: 'Diya Sharma accepts Goldman Sachs offer',
-    detail:
+    description:
       'Third analyst offer from the Risk desk this season — the highest MBA package recorded by the department so far.',
     time: '2 days ago',
     companySlug: 'goldmansachs',
-    meta: '₹33.8 LPA',
+    appliedCount: 3,
   },
   {
     id: 'up-10',
-    kind: 'notice',
-    title: 'New: AI resume score v2 is live',
-    detail:
+    tag: 'UPDATE',
+    title: 'AI resume score v2 is live',
+    description:
       'Scores now weigh projects and certifications separately, and tell you the exact three skills to add for each role.',
     time: '3 days ago',
-    meta: 'Product update',
+  },
+  {
+    id: 'up-11',
+    tag: 'DRIVE',
+    title: 'Hospital Pharmacist campus drive open',
+    description:
+      'Apollo Pharmacy Network is hiring B.Pharm / D.Pharm graduates. Register before the portal closes.',
+    time: '4 hours ago',
+    registrationCount: 0,
+    flags: ['CLOSING_SOON'],
   },
 ]
 
