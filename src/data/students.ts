@@ -132,7 +132,7 @@ export const placedStudents: PlacedStudent[] = [
     role: 'Infrastructure Analyst',
     package: '₹12.4 LPA',
     batch: '2025',
-    quote: 'Consulting felt out of reach for Civil until TalentBridge showed me the exact eligibility path.',
+    quote: 'Consulting felt out of reach for Civil until OrientalPortal showed me the exact eligibility path.',
     offers: 1,
   },
   {

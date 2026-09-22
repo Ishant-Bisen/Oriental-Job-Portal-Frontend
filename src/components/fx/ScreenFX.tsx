@@ -207,7 +207,7 @@ export function Preloader({ onDone }: { onDone: () => void }) {
 
         <div className="text-center">
           <p className="font-display text-lg font-bold tracking-tight text-white">
-            Talent<span className="text-gradient">Bridge</span>
+            Oriental<span className="text-gradient">Portal</span>
           </p>
           <p className="mt-1 text-[11px] uppercase tracking-[0.32em] text-slate-500">
             university placement suite

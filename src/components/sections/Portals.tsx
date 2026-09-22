@@ -151,7 +151,7 @@ export function Portals() {
                   <div className="ml-2 flex flex-1 items-center gap-2 rounded-lg border border-white/[0.07] bg-white/[0.03] px-2.5 py-1">
                     <Search className="h-3 w-3 text-slate-600" />
                     <span className="font-mono text-[10px] text-slate-600">
-                      talentbridge.university.edu/{role}
+                      orientalportal.university.edu/{role}
                     </span>
                   </div>
                   <Bell className="h-3.5 w-3.5 text-slate-500" />

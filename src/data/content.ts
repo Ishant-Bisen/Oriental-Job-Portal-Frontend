@@ -43,42 +43,42 @@ export const missionPoints = [
 export const advantages = [
   {
     feature: 'Recruiter authenticity',
-    talentbridge: 'Every recruiter verified by the placement cell before a job goes live',
+    orientalPortal: 'Every recruiter verified by the placement cell before a job goes live',
     traditional: 'Open postings, frequent ghost jobs and fake consultancies',
   },
   {
     feature: 'Competition pool',
-    talentbridge: 'You compete inside your campus cohort for reserved campus seats',
+    orientalPortal: 'You compete inside your campus cohort for reserved campus seats',
     traditional: 'You compete with lakhs of applicants across the country',
   },
   {
     feature: 'Application outcome',
-    talentbridge: 'Live status for every round with reasons and scorecards',
+    orientalPortal: 'Live status for every round with reasons and scorecards',
     traditional: 'Applications vanish into a black hole, no feedback',
   },
   {
     feature: 'Resume feedback',
-    talentbridge: 'AI score against each JD plus the exact skills you are missing',
+    orientalPortal: 'AI score against each JD plus the exact skills you are missing',
     traditional: 'Generic ATS keyword tips, if any',
   },
   {
     feature: 'Eligibility clarity',
-    talentbridge: 'CGPA, batch and backlog rules shown before you apply',
+    orientalPortal: 'CGPA, batch and backlog rules shown before you apply',
     traditional: 'Hidden filters reject you silently after applying',
   },
   {
     feature: 'Preparation support',
-    talentbridge: 'Workshops, mock interviews and alumni mentors on one calendar',
+    orientalPortal: 'Workshops, mock interviews and alumni mentors on one calendar',
     traditional: 'Paid third-party courses, no campus context',
   },
   {
     feature: 'Interview logistics',
-    talentbridge: 'Slot letters, venue, reporting time and documents auto-pushed',
+    orientalPortal: 'Slot letters, venue, reporting time and documents auto-pushed',
     traditional: 'Endless email chains and missed schedules',
   },
   {
     feature: 'Data & privacy',
-    talentbridge: 'Your data stays with the university; no reselling to agencies',
+    orientalPortal: 'Your data stays with the university; no reselling to agencies',
     traditional: 'Profile sold to recruiters and spam callers',
   },
 ]
@@ -160,7 +160,7 @@ export const journeySteps = [
 
 export const faqs = [
   {
-    q: 'Who can register on TalentBridge?',
+    q: 'Who can register on OrientalPortal?',
     a: 'All enrolled students of the university across UG, PG and diploma programmes. Your roll number is verified against the registrar database, so registration takes under two minutes.',
   },
   {

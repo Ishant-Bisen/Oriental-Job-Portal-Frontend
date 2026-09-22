@@ -12,7 +12,7 @@ const tabs = [
     icon: Users2,
     heading: 'The university’s own placement cell — digitised.',
     body:
-      'TalentBridge is built and run by the Training & Placement Cell together with student coordinators from all eight departments. Every recruiter, drive and result you see here is verified in-house.',
+      'OrientalPortal is built and run by the Training & Placement Cell together with student coordinators from all eight departments. Every recruiter, drive and result you see here is verified in-house.',
     image: '/images/about-students.png',
     caption: 'Student coordinators run the platform alongside the T&P Cell',
     accent: 'from-brand-500/30',
@@ -70,7 +70,7 @@ export function About() {
     <section id="about" className="section-pad relative">
       <div className="container-x">
         <SectionHeading
-          eyebrow="About TalentBridge"
+          eyebrow="About OrientalPortal"
           title="Built inside the campus,"
           highlight="for the campus."
           description="Three things worth knowing before you scroll further — tap any of them to see it."

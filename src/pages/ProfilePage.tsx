@@ -24,6 +24,7 @@ import {
 import {
   countApplicationsByStatus,
   fetchMyApplications,
+  formatApplicationWhen,
   normalizeApplicationStatus,
   withdrawApplication,
   type ApplicationStatusKey,
@@ -614,10 +615,17 @@ export default function ProfilePage() {
                                 </span>
                               </div>
                               <p className="mt-1 text-[12px] text-slate-400">
-                                {[app.department, app.jobType].filter(Boolean).join(' · ') || 'Campus drive'}
+                                {[app.companyName, app.department, app.jobType].filter(Boolean).join(' · ') ||
+                                  'Campus drive'}
                                 {' · '}
                                 Applied {formatAppliedAt(app.appliedAt)}
                               </p>
+                              {app.statusUpdatedAt &&
+                              normalizeApplicationStatus(app.status) !== 'APPLIED' ? (
+                                <p className="mt-1 text-[11.5px] font-medium text-slate-500">
+                                  Status updated {formatApplicationWhen(app.statusUpdatedAt)}
+                                </p>
+                              ) : null}
                               <p className="mt-1 font-mono text-[10.5px] text-slate-600">
                                 App #{app.applicationId} · Job #{app.jobId}
                               </p>

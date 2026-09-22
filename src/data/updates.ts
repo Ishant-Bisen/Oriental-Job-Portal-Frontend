@@ -129,7 +129,7 @@ export const updates: Update[] = [
     tag: 'WORKSHOP',
     title: 'System Design Bootcamp — seats filling fast',
     description:
-      'Level 1 covers caching, sharding and read scaling with two live design exercises. Certificates auto-attach to your TalentBridge profile.',
+      'Level 1 covers caching, sharding and read scaling with two live design exercises. Certificates auto-attach to your OrientalPortal profile.',
     time: '7 hours ago',
     flags: ['CLOSING_SOON'],
     registrationCount: 97,

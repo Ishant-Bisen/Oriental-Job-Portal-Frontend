@@ -102,10 +102,14 @@ export type JobApplication = {
   applicationId: number
   jobId: number
   jobTitle: string
+  companyName?: string
   department?: string
   jobType?: string
   profilePicture?: string
   appliedAt: string
+  /** Present after the placement cell (or withdraw) moves the status past APPLIED. */
+  statusUpdatedAt?: string | null
+  updatedAt?: string | null
   status: string
   canWithdraw: boolean
 }
@@ -170,6 +174,78 @@ export function countApplicationsByStatus(apps: JobApplication[]) {
     counts[normalizeApplicationStatus(app.status)] += 1
   }
   return counts
+}
+
+export type ApplicationStatusMeta = {
+  label: string
+  tone: string
+  blurb: string
+}
+
+export const applicationStatusMeta: Record<ApplicationStatusKey, ApplicationStatusMeta> = {
+  APPLIED: {
+    label: 'Applied',
+    tone: 'border-brand-400/30 bg-brand-500/10 text-brand-200',
+    blurb: 'Waiting with the placement cell',
+  },
+  REVIEWED: {
+    label: 'Under review',
+    tone: 'border-neon-cyan/30 bg-neon-cyan/10 text-neon-cyan',
+    blurb: 'Your profile is being screened',
+  },
+  SHORTLISTED: {
+    label: 'Shortlisted',
+    tone: 'border-neon-violet/30 bg-neon-violet/10 text-neon-violet',
+    blurb: 'You moved ahead — watch for next steps',
+  },
+  ACCEPTED: {
+    label: 'Offer / accepted',
+    tone: 'border-neon-lime/30 bg-neon-lime/10 text-neon-lime',
+    blurb: 'Great news from this drive',
+  },
+  REJECTED: {
+    label: 'Not selected',
+    tone: 'border-neon-pink/30 bg-neon-pink/10 text-neon-pink',
+    blurb: 'This drive is closed for your application',
+  },
+  WITHDRAWN: {
+    label: 'Withdrawn',
+    tone: 'border-white/10 bg-white/[0.04] text-slate-400',
+    blurb: 'You withdrew this application',
+  },
+}
+
+/** Timestamp used to order / highlight status transitions. */
+export function applicationStatusTime(app: JobApplication) {
+  const raw = app.statusUpdatedAt || app.updatedAt || app.appliedAt
+  const time = new Date(raw).getTime()
+  return Number.isNaN(time) ? 0 : time
+}
+
+/**
+ * Applications whose status has moved past the initial APPLIED state —
+ * used for the post-login “status changes” board.
+ */
+export function recentStatusChanges(apps: JobApplication[], limit = 8) {
+  return apps
+    .filter((app) => normalizeApplicationStatus(app.status) !== 'APPLIED')
+    .sort((a, b) => applicationStatusTime(b) - applicationStatusTime(a))
+    .slice(0, limit)
+}
+
+export function formatApplicationWhen(iso?: string | null) {
+  if (!iso) return '—'
+  const date = new Date(iso)
+  if (Number.isNaN(date.getTime())) return '—'
+  const diff = Date.now() - date.getTime()
+  const mins = Math.round(diff / 60_000)
+  if (mins < 1) return 'Just now'
+  if (mins < 60) return `${mins}m ago`
+  const hours = Math.round(mins / 60)
+  if (hours < 24) return `${hours}h ago`
+  const days = Math.round(hours / 24)
+  if (days < 7) return `${days}d ago`
+  return date.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })
 }
 
 const DAY = 86_400_000

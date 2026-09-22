@@ -68,7 +68,7 @@ export default function LoginPage() {
               <span className="grid h-12 w-12 place-items-center rounded-2xl border border-white/10 bg-brand-500/10">
                 <BridgeMark className="h-7 w-7" />
               </span>
-              <p className="mt-6 chip border-white/15 bg-white/[0.06] text-slate-200">TalentBridge portal</p>
+              <p className="mt-6 chip border-white/15 bg-white/[0.06] text-slate-200">OrientalPortal</p>
               <h1 className="mt-4 text-3xl font-extrabold leading-tight sm:text-[2.35rem]">
                 Welcome back to the <span className="text-gradient-animated">placement cell.</span>
               </h1>
@@ -191,7 +191,7 @@ export default function LoginPage() {
                     </form>
 
                     <p className="mt-6 text-center text-[12.5px] text-slate-400">
-                      New to TalentBridge?{' '}
+                      New to OrientalPortal?{' '}
                       <Link to="/register" className="font-semibold text-white transition hover:text-brand-200">
                         Create an account
                       </Link>

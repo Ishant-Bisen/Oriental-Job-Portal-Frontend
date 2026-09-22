@@ -16,7 +16,7 @@ const guestQuickLinks = [
   { label: 'Campus calendar', href: '#events' },
   { label: 'Placement record', href: '#stats' },
   { label: 'Our recruiters', href: '#recruiters' },
-  { label: 'Why TalentBridge', href: '#advantage' },
+  { label: 'Why OrientalPortal', href: '#advantage' },
 ]
 
 const studentQuickLinks = [
@@ -133,7 +133,7 @@ export function Footer() {
                   <BridgeMark className="h-6 w-6" />
                 </span>
                 <span className="font-display text-lg font-bold text-white">
-                  Talent<span className="text-gradient">Bridge</span>
+                  Oriental<span className="text-gradient">Portal</span>
                 </span>
               </Link>
 
@@ -305,7 +305,7 @@ export function Footer() {
 
           <div className="mt-10 flex flex-wrap items-center gap-4 border-t border-white/[0.06] pt-6">
             <p className="text-[11.5px] text-slate-500">
-              © {new Date().getFullYear()} TalentBridge · Training & Placement Cell, University Campus.
+              © {new Date().getFullYear()} OrientalPortal · Training & Placement Cell, University Campus.
             </p>
             <div className="ml-auto flex flex-wrap gap-x-5 gap-y-2 text-[11.5px] text-slate-500">
               {!isStudent && (

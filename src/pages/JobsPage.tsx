@@ -1,7 +1,9 @@
 import { ArrowLeft, ChevronLeft, ChevronRight, Filter, Search, SlidersHorizontal, X } from 'lucide-react'
-import { useMemo, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { useEffect, useMemo, useState } from 'react'
+import { Link, useLocation } from 'react-router-dom'
 import { daysUntil, uniqueValues, type Job } from '@/api/jobs'
+import { useAuth } from '@/auth/AuthProvider'
+import { ApplicationStatusUpdates } from '@/components/sections/ApplicationStatusUpdates'
 import { JobCard } from '@/components/jobs/JobCard'
 import { JobModal } from '@/components/jobs/JobModal'
 import { useJobsBoard, type JobsBoardSort } from '@/hooks/useJobsBoard'
@@ -20,6 +22,10 @@ function pageWindow(current: number, total: number) {
 }
 
 export default function JobsPage() {
+  const { isAuthenticated, user } = useAuth()
+  const location = useLocation()
+  const isCandidate = isAuthenticated && /candidate|student/i.test(user?.role ?? '')
+
   const [query, setQuery] = useState('')
   const [dept, setDept] = useState('All')
   const [type, setType] = useState('All')
@@ -45,6 +51,14 @@ export default function JobsPage() {
     sort,
   })
 
+  useEffect(() => {
+    if (location.hash !== '#application-status') return
+    const t = window.setTimeout(() => {
+      document.getElementById('application-status')?.scrollIntoView({ behavior: 'smooth' })
+    }, 80)
+    return () => window.clearTimeout(t)
+  }, [location.hash, isCandidate])
+
   const departments = useMemo(
     () => ['All', ...uniqueValues(facetJobs.map((job) => job.department))],
     [facetJobs],
@@ -69,8 +83,13 @@ export default function JobsPage() {
   const pages = pageWindow(page, totalPages)
 
   return (
-    <div className="pb-24 pt-28 sm:pt-32">
-      <div className="container-x">
+    <div className="pb-24">
+      {isCandidate ? <ApplicationStatusUpdates /> : null}
+
+      <div
+        id="jobs-board"
+        className={cn('container-x', isCandidate ? 'pt-4 sm:pt-6' : 'pt-28 sm:pt-32')}
+      >
         <Link
           to="/"
           className="inline-flex items-center gap-2 text-[12.5px] font-semibold text-slate-400 transition hover:text-white"

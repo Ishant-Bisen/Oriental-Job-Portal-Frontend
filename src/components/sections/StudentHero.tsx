@@ -1,13 +1,16 @@
 import { motion, useScroll, useTransform } from 'framer-motion'
 import {
   ArrowDown,
+  ArrowRight,
   BellRing,
+  Briefcase,
   CalendarDays,
   Megaphone,
   Presentation,
   Sparkles,
 } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
 import { displayName, fetchCandidateProfile, type CandidateProfile } from '@/api/candidate'
 import { useAuth } from '@/auth/AuthProvider'
 import { ParticleField } from '@/components/fx/ScreenFX'
@@ -21,6 +24,7 @@ import { initials } from '@/lib/utils'
  */
 export function StudentHero() {
   const { user } = useAuth()
+  const navigate = useNavigate()
   const ref = useRef<HTMLDivElement>(null)
   const { scrollYProgress } = useScroll({ target: ref, offset: ['start start', 'end start'] })
   const yText = useTransform(scrollYProgress, [0, 1], [0, 90])
@@ -121,6 +125,11 @@ export function StudentHero() {
                 See notices
                 <ArrowDown className="h-4 w-4 transition-transform group-hover:translate-y-0.5" />
               </MagneticButton>
+              <Link to="/jobs#application-status" className="btn-ghost inline-flex items-center gap-2">
+                <Briefcase className="h-4 w-4" />
+                Application status
+                <ArrowRight className="h-3.5 w-3.5" />
+              </Link>
               <button type="button" onClick={() => scrollTo('events')} className="btn-ghost">
                 <CalendarDays className="h-4 w-4" />
                 Campus calendar
@@ -165,6 +174,7 @@ export function StudentHero() {
                         label: 'Notices · live board',
                         tone: 'bg-neon-amber',
                         target: 'updates',
+                        href: undefined as string | undefined,
                       },
                       {
                         top: '48%',
@@ -172,19 +182,27 @@ export function StudentHero() {
                         label: 'Workshop · Design systems',
                         tone: 'bg-neon-cyan',
                         target: 'events',
+                        href: undefined as string | undefined,
                       },
                       {
                         top: '36%',
                         left: '38%',
-                        label: 'Drive open · today',
-                        tone: 'bg-brand-400',
-                        target: 'events',
+                        label: 'Status · your apps',
+                        tone: 'bg-neon-violet',
+                        target: '',
+                        href: '/jobs#application-status',
                       },
                     ].map((h, i) => (
                       <motion.button
                         key={h.label}
                         type="button"
-                        onClick={() => scrollTo(h.target)}
+                        onClick={() => {
+                          if (h.href) {
+                            navigate(h.href)
+                            return
+                          }
+                          scrollTo(h.target)
+                        }}
                         initial={{ opacity: 0, scale: 0.6 }}
                         animate={{ opacity: 1, scale: 1 }}
                         transition={{ delay: 1.1 + i * 0.15, type: 'spring', stiffness: 220 }}

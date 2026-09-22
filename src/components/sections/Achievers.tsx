@@ -43,7 +43,7 @@ export function Achievers() {
             eyebrow="Class of 2025"
             title="The students who"
             highlight="made it count."
-            description="Real profiles, real packages, real advice. Every card below is a student from this campus who converted through TalentBridge."
+            description="Real profiles, real packages, real advice. Every card below is a student from this campus who converted through OrientalPortal."
             className="max-w-2xl"
           />
 

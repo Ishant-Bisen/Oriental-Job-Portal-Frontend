@@ -90,7 +90,7 @@ export function Hero() {
               transition={{ duration: 0.8, delay: 0.7 }}
               className="mt-8 max-w-xl text-[1.02rem] leading-relaxed text-slate-400 sm:text-lg"
             >
-              TalentBridge is the university's official placement platform — verified recruiters,
+              OrientalPortal is the university's official placement platform — verified recruiters,
               AI-scored resumes, department-wise drives and every deadline on one live timeline.
               <span className="text-slate-200"> No ghost jobs. No missed updates.</span>
             </motion.p>

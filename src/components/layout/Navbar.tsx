@@ -85,7 +85,7 @@ export function Navbar() {
               <span className="absolute inset-0 rounded-xl bg-brand-500/20 opacity-0 blur-md transition group-hover:opacity-100" />
             </span>
             <span className="font-display text-[1.05rem] font-bold tracking-tight text-white">
-              Talent<span className="text-gradient">Bridge</span>
+              Oriental<span className="text-gradient">Portal</span>
               <span className="ml-2 hidden align-middle text-[9px] font-semibold uppercase tracking-[0.2em] text-slate-500 lg:inline">
                 T&P Cell
               </span>

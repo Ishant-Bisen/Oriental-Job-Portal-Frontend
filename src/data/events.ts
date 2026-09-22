@@ -86,7 +86,7 @@ export const campusEvents: CampusEvent[] = [
     kind: 'deadline',
     dayOffset: 2,
     time: 'Closes 23:59',
-    venue: 'Online — TalentBridge portal',
+    venue: 'Online — OrientalPortal',
     seats: 0,
     registered: 274,
     summary: 'Last window to submit your portfolio for the 6-month Product Engineering internship with PPO track.',

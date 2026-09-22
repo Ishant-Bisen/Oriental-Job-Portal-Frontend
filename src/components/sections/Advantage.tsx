@@ -16,7 +16,7 @@ export function Advantage() {
     <section id="advantage" className="section-pad relative">
       <div className="container-x">
         <SectionHeading
-          eyebrow="TalentBridge vs job portals"
+          eyebrow="OrientalPortal vs job portals"
           title="Why campus hiring here beats"
           highlight="a generic job portal."
           description="Same effort, very different outcome. Here is the honest side-by-side."
@@ -51,7 +51,7 @@ export function Advantage() {
               <div className="flex items-center gap-2 rounded-2xl border border-brand-400/30 bg-brand-500/10 px-3 py-2.5">
                 <BridgeMark className="h-5 w-5 shrink-0" />
                 <span className="text-[12px] font-bold leading-tight text-white">
-                  Talent<span className="text-gradient">Bridge</span>
+                  Oriental<span className="text-gradient">Portal</span>
                 </span>
               </div>
               <div className="flex items-center gap-2 rounded-2xl border border-white/[0.08] bg-white/[0.02] px-3 py-2.5">
@@ -79,7 +79,7 @@ export function Advantage() {
                     <span className="mt-0.5 grid h-4 w-4 shrink-0 place-items-center rounded-full bg-neon-lime/20 text-neon-lime">
                       <Check className="h-2.5 w-2.5" strokeWidth={3.5} />
                     </span>
-                    <p className="text-[11.5px] leading-relaxed text-slate-200">{row.talentbridge}</p>
+                    <p className="text-[11.5px] leading-relaxed text-slate-200">{row.orientalPortal}</p>
                   </div>
 
                   <div className="flex gap-2.5 rounded-xl px-3 py-2.5">

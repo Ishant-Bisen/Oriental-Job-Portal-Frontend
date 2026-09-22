@@ -98,7 +98,7 @@ export default function RegisterPage() {
               </span>
               <p className="mt-6 chip border-white/15 bg-white/[0.06] text-slate-200">Placement portal</p>
               <h1 className="mt-4 text-3xl font-extrabold leading-tight sm:text-[2.35rem]">
-                Create your <span className="text-gradient-animated">TalentBridge</span> account.
+                Create your <span className="text-gradient-animated">OrientalPortal</span> account.
               </h1>
               <p className="mt-4 max-w-md text-[13.5px] leading-relaxed text-slate-300">
                 Student registration is open now. Recruiter accounts will unlock in a later release.
